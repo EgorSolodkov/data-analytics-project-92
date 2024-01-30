@@ -53,3 +53,43 @@ when weekday = 5 then 'saturday'
 when weekday = 6 then 'sunday'
 end as weekday, income
 from sort s inner join employees e on sales_person_id = employee_id
+
+!!!age_groups
+select case 
+	when age > 16 and age <= 25  then '16-25'
+	when age > 25 and age <= 40  then '25-40'
+	when age > 40  then '40+'
+	end as age_category,
+	count(distinct customer_id)
+from customers
+group by age_category 
+order by age_category
+count(distinct customer_id)
+	
+!!!customers_by_month
+select to_char(sale_date, 'YYYY-MM') as date, count(distinct customer_id) as total_customers,
+round(sum(quantity*price)) as income
+from sales inner join products on sales.product_id = products.product_id
+group by date
+	
+!!!special_offer
+with sales1 as 
+(
+select s.customer_id, product_id, concat(c.first_name, ' ', c.last_name) as customer, sale_date,
+concat(e.first_name, ' ', e.last_name) as seller
+from sales s inner join customers c on s.customer_id = c.customer_id
+inner join employees e on sales_person_id = employee_id
+),
+mk1 as (
+select customer_id, customer, 
+first_value(sale_date) over(partition by customer order by sale_date) as sale_date,
+first_value(product_id) over(partition by customer order by sale_date) as product_id,
+first_value(seller) over(partition by customer order by sale_date) as seller
+from sales1)
+select customer, sale_date, seller from mk1 m
+inner join products p on p.product_id =m.product_id
+where price = 0
+group by customer, sale_date, m.product_id, seller, customer_id
+order by customer_id
+
+
