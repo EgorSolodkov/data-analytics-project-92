@@ -73,23 +73,25 @@ from sales inner join products on sales.product_id = products.product_id
 group by date
 	
 !!!special_offer
-with sales1 as 
+with sort1 as (
+select customer_id, first_value(product_id) over(partition by customer_id order by sale_date) as first_product,
+first_value(sales_person_id) over(partition by customer_id order by sale_date) as first_emplyee,
+first_value(sale_date) over(partition by customer_id order by sale_date) as first_sale
+from sales s),
+sort2 as (
+select customer_id, min(first_product) as first_product, min(first_emplyee) as first_employee,
+min(first_sale) as sale_date
+from sort1
+group by customer_id),
+sort3 as 
 (
-select s.customer_id, product_id, concat(c.first_name, ' ', c.last_name) as customer, sale_date,
+select customer_id, first_product, first_employee, sale_date
+from sort2 s2 inner join products p on s2.first_product = p.product_id
+where price = 0)
+select concat(c.first_name, ' ', c.last_name) as customer,
+sale_date,
 concat(e.first_name, ' ', e.last_name) as seller
-from sales s inner join customers c on s.customer_id = c.customer_id
-inner join employees e on sales_person_id = employee_id
-),
-mk1 as (
-select customer_id, customer, 
-first_value(sale_date) over(partition by customer order by sale_date) as sale_date,
-first_value(product_id) over(partition by customer order by sale_date) as product_id,
-first_value(seller) over(partition by customer order by sale_date) as seller
-from sales1)
-select customer, sale_date, seller from mk1 m
-inner join products p on p.product_id =m.product_id
-where price = 0
-group by customer, sale_date, m.product_id, seller, customer_id
-order by customer_id
+from sort3 s inner join customers c on c.customer_id = s.customer_id
+inner join employees e on first_employee = employee_id
 
 
