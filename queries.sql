@@ -34,25 +34,26 @@ inner join sales s on p.product_id = s.product_id)
 order by avg_income
 
 !!!day_of_the_week_income
-with sort as 
-(
-select sales_person_id, extract(dow from sale_date) as weekday,
-round(sum(quantity*price)) as income 
-from sales s 
-inner join products p on s.product_id = p.product_id
-group by sales_person_id, weekday
-order by sales_person_id, weekday
-)
+with sort1 as (
+select sales_person_id,
+extract(dow from sale_date) as weekday1,
+round(sum(quantity*price)) as income
+from sales s
+inner join products p on p.product_id = s.product_id
+group by sales_person_id, weekday1
+order by weekday1)
 select concat(first_name, ' ', last_name) as name,
-case when weekday = 0 then 'monday'
-when weekday = 1 then 'tuesday'
-when weekday = 2 then 'wednesday'
-when weekday = 3 then 'thursday'
-when weekday = 4 then 'friday'
-when weekday = 5 then 'saturday'
-when weekday = 6 then 'sunday'
+case when weekday1 = 0 then 'monday'
+when weekday1 = 1 then 'tuesday'
+when weekday1 = 2 then 'wednesday'
+when weekday1 = 3 then 'thursday'
+when weekday1 = 4 then 'friday'
+when weekday1 = 5 then 'saturday'
+when weekday1 = 6 then 'sunday'
 end as weekday, income
-from sort s inner join employees e on sales_person_id = employee_id
+from sort1 s inner join employees e on sales_person_id = employee_id
+order by name, weekday1
+
 
 !!!age_groups
 select case 
