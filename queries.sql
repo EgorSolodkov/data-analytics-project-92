@@ -11,13 +11,13 @@ select customer_id from customers where age > 50
 !!!top_10_total_income
 with inc as 
 (
-select 	sales_person_id, round(sum(quantity*price)) as income, count(quantity) as operations
+select 	sales_person_id, floor(sum(quantity*price)) as income, count(quantity) as operations
 from sales s 
 inner join products p on s.product_id = p.product_id
 group by sales_person_id
 order by income desc
 )
-select concat(first_name, ' ', last_name) as name, income, operations
+select concat(first_name, ' ', last_name) as name, operations, income
 from inc i inner join employees e on i.sales_person_id = e.employee_id
 order by income desc limit 10
 
@@ -41,18 +41,30 @@ round(sum(quantity*price)) as income
 from sales s
 inner join products p on p.product_id = s.product_id
 group by sales_person_id, weekday1
-order by weekday1)
+order by weekday1),
+sort2 as 
+(
+select sales_person_id,
+case when weekday1 = 0 then 6
+when weekday1 = 1 then 0
+when weekday1 = 2 then 1
+when weekday1 = 3 then 2
+when weekday1 = 4 then 3
+when weekday1 = 5 then 4
+when weekday1 = 6 then 5
+end as weekday1, income
+from sort1)
 select concat(first_name, ' ', last_name) as name,
-case when weekday1 = 0 then 'monday'
-when weekday1 = 1 then 'tuesday'
+case when weekday1 = 0 then 'monday   '
+when weekday1 = 1 then 'tuesday  '
 when weekday1 = 2 then 'wednesday'
-when weekday1 = 3 then 'thursday'
-when weekday1 = 4 then 'friday'
-when weekday1 = 5 then 'saturday'
-when weekday1 = 6 then 'sunday'
+when weekday1 = 3 then 'thursday '
+when weekday1 = 4 then 'friday   '
+when weekday1 = 5 then 'saturday '
+when weekday1 = 6 then 'sunday   '
 end as weekday, income
-from sort1 s inner join employees e on sales_person_id = employee_id
-order by name, weekday1
+from sort2 s inner join employees e on sales_person_id = employee_id
+order by weekday1, name
 
 
 !!!age_groups
